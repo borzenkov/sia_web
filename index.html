@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Head widget</title>
+    <script src="js/three.min.js" type="text/javascript"></script>
+    <script src="js/sia.js" type="text/javascript"></script>
+    <script src="js/TrackballControls.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            /*На самом деле это хак, чтобы страничка не скроллилась, ибо при скроллинге колор пикер начинает лагать*/
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<noscript><p style="color:red">Sorry, this page requires JavaScript to run.</p></noscript>
+
+<!--[if lt IE 9]>
+<hr>
+<p style="color:red">Sorry, this page uses HTML canvas.<br>
+    Canvas is not supported in Internet Explorer 8 or earlier.<br>
+    Please use a newer version or a different browser.</p>
+<hr>
+<![endif]-->
+
+<h1>Head widget</h1>
+<div>Длина головки: <input id="headLength" type="number" min="1" value="400"> пикселей</div>
+<div>Количество управляющих точек: <input id="numberOfHeadControlPoints" type="number" min="1" value="3"></div>
+<div><button onclick="init()">Построить</button></div>
+
+<p id="message" style="font-weight: bold"></p>
+
+<p style="font-weight: bold"><input type="checkbox" id="lock"> <label for="lock" style="margin-right:1cm">Lock Control Point Pairs</label>
+    <input type="checkbox" id="cubicHide"> <label for="cubicHide">Hide Controls</label></p>
+
+<canvas width="400" height="400" id="cubic" style="background-color: white; border: thin solid black"></canvas>
+
+</body>
+</html>
+
