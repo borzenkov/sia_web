@@ -79,12 +79,11 @@ function PlateParameters() {
 	this.point_F_FilletRadius = 5;
 	this.contourFilletRadius = 0.5;
 	this.thickness = 10;
-	this.contourFilletSlicesNumber = 100;
+	this.contourFilletSlicesNumber = 10;
 	this.angleBetaPartitionNumber = 10;
 }
 
-function Plate(parameters, scene) {
-	this.scene = scene;
+function Plate(parameters) {
 	//Plate's parameters initialization
 	this.point_A = new THREE.Vector3();
 	this.point_B = new THREE.Vector3();
@@ -119,12 +118,16 @@ function Plate(parameters, scene) {
 	this.angleBetaPartitionNumber = parameters.angleBetaPartitionNumber;
 	this.firstContourFilletSlice = new Array();
 	this.lastContourFilletSlice = new Array();
-	this.contourFilletSliceRotationAngle = Math.PI / (2 * (this.contourFilletSlicesNumber + 1));
+	this.plateMesh = new THREE.Mesh();
+	this.material = new THREE.MeshNormalMaterial();
+	this.material.side = THREE.DoubleSide;
+	this.plateMesh.material = this.material;
 	//Build plate
 	this.build();
 }
 
 Plate.prototype.build = function() {
+	this.contourFilletSliceRotationAngle = Math.PI / (2 * (this.contourFilletSlicesNumber + 1));
 	this.buildScaledContour();
 	this.buildContourFillet();
 };
@@ -190,30 +193,14 @@ Plate.prototype.buildContourFillet = function() {
 	this.point_F1.setZ(0);
 	
 	var i, j;
+	
+	this.contourFilletSlices.length = 0;
 	for(i = 0; i < this.contourFilletSlicesNumber + 2; i++) {
 		this.contourFilletSlices[i] = new Array();
 	}
-
+	
 	this.buildFirstContourFilletSlice();
 	this.buildLastContourFilletSlice();
-
-	////Show first contour fillet slice
-	//var firstContourFilletSliceGeometry = new THREE.Geometry();
-	//for(i = 0; i < this.firstContourFilletSlice.length; i++) {
-	//	firstContourFilletSliceGeometry.vertices.push(this.firstContourFilletSlice[i]);
-	//}
-	//var firstContourFilletSliceMaterial = new THREE.PointsMaterial( { size: 3, color: 0x000000, sizeAttenuation: false } );
-	//var firstContourFilletSliceCloud = new THREE.Points( firstContourFilletSliceGeometry, firstContourFilletSliceMaterial );
-	//scene.add( firstContourFilletSliceCloud );
-//
-	////Show last contour fillet slice
-	//var lastContourFilletSliceGeometry = new THREE.Geometry();
-	//for(i = 0; i < this.lastContourFilletSlice.length; i++) {
-	//	lastContourFilletSliceGeometry.vertices.push(this.lastContourFilletSlice[i]);
-	//}
-	//var lastContourFilletSliceMaterial = new THREE.PointsMaterial( { size: 3, color: 0xB20000, sizeAttenuation: false } );
-	//var lastContourFilletSliceCloud = new THREE.Points( lastContourFilletSliceGeometry, lastContourFilletSliceMaterial );
-	//scene.add( lastContourFilletSliceCloud );
 	
 	this.contourFilletSlices[0] = this.firstContourFilletSlice;
 	
@@ -304,17 +291,12 @@ Plate.prototype.buildContourFillet = function() {
         dotGeometry.faces.push( new THREE.Face3( firstPointOfSecondTriangleIndex, secondPointOfSecondTriangleIndex, thirdPointOfSecondTriangleIndex ) );
 	}
 
-	//var dotMaterial = new THREE.PointsMaterial( { size: 3, color: 0x25BCCA, sizeAttenuation: false } );
-	//var dot = new THREE.Points( dotGeometry, dotMaterial );
-	//scene.add( dot );
-	var material = new THREE.MeshNormalMaterial();
-	material.side = THREE.DoubleSide;
 	dotGeometry.computeFaceNormals();
-	var dot = new THREE.Mesh( dotGeometry, material );
-	scene.add( dot );
+	this.plateMesh.geometry = dotGeometry;
 };
 
 Plate.prototype.buildFirstContourFilletSlice = function() {
+	this.firstContourFilletSlice.length = 0;
 	this.firstContourFilletSlice.push(this.point_A1);
 	this.firstContourFilletSlice.push(this.point_B1);
 	
@@ -336,6 +318,7 @@ Plate.prototype.buildFirstContourFilletSlice = function() {
 };
 
 Plate.prototype.buildLastContourFilletSlice = function() {
+	this.lastContourFilletSlice.length = 0;
 	this.lastContourFilletSlice.push(this.point_A);
 	this.lastContourFilletSlice.push(this.point_B);
 	
@@ -356,6 +339,6 @@ Plate.prototype.buildLastContourFilletSlice = function() {
 	this.lastContourFilletSlice = this.lastContourFilletSlice.concat( getFilletPoints(point_F_Fillet, this.angleBetaPartitionNumber) );
 };
 
-function Prothesis(parameters, scene) {
-	this.plate = new Plate(parameters, scene);
+function Prothesis(parameters) {
+	this.plate = new Plate(parameters);
 }

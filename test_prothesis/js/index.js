@@ -5,6 +5,8 @@ var cameraControl;
 var scene;
 var junc;
 var mesh;
+var pp;
+var p;
 
 window.onload = init;
 // calls the handleResize function when the window is resized
@@ -27,8 +29,9 @@ function init() {
 	var stats = initStats();
     // create a scene, that will hold all our elements such as objects, cameras and lights.
     scene = new THREE.Scene();
-    var pp = new PlateParameters();
-	var p = new Prothesis(pp, scene);
+    pp = new PlateParameters();
+	p = new Prothesis(pp);
+    scene.add(p.plate.plateMesh);
     // create a camera, which defines where we're looking at.
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     // create a render, sets the background color and the size
@@ -50,6 +53,26 @@ function init() {
     // add the output of the renderer to the html element
     document.getElementById("WebGL-output").appendChild(renderer.domElement);
 
+    var controls = new function () {
+        this.contourFilletRadius = 0.5;
+        this.angleBetaPartitionNumber = 10;
+        this.contourFilletSlicesNumber = 10;
+        this.contourFilletSlicesNumber = 10;
+        this.point_D_FilletRadius = 5;
+        this.asGeom = function () {
+            p.plate.contourFilletRadius = controls.contourFilletRadius;
+            p.plate.angleBetaPartitionNumber = controls.angleBetaPartitionNumber;
+            p.plate.contourFilletSlicesNumber = controls.contourFilletSlicesNumber;
+            p.plate.point_D_FilletRadius = controls.point_D_FilletRadius;
+            p.plate.plateMesh.geometry.dispose();
+            p.plate.build();
+        };
+    };
+    var gui = new dat.GUI();
+    gui.add(controls, 'contourFilletRadius', 0.5, 5).step(0.1).onChange(controls.asGeom);
+    gui.add(controls, 'angleBetaPartitionNumber', 1, 50).step(1).onChange(controls.asGeom);
+    gui.add(controls, 'contourFilletSlicesNumber', 1, 50).step(1).onChange(controls.asGeom);
+    gui.add(controls, 'point_D_FilletRadius', 1, 10).step(1).onChange(controls.asGeom);
     render();
     function render() {
     	// update the camera

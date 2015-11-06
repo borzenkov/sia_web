@@ -1,4 +1,3 @@
-//поиграться с порядком записи точек в слайсы
 var camera;
 var renderer;
 var cameraControl;
