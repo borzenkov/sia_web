@@ -32,6 +32,7 @@ function init() {
     pp = new PlateParameters();
 	p = new Prothesis(pp);
     scene.add(p.plate.plateMesh);
+    scene.add(p.plate.frontFaceMesh);
     // create a camera, which defines where we're looking at.
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     // create a render, sets the background color and the size
@@ -59,12 +60,19 @@ function init() {
         this.contourFilletSlicesNumber = 10;
         this.contourFilletSlicesNumber = 10;
         this.point_D_FilletRadius = 5;
+        this.hole_G_Radius = 2;
+        this.hole_G_CenterX = 5;
+        this.hole_G_CenterY = 15;
         this.asGeom = function () {
             p.plate.contourFilletRadius = controls.contourFilletRadius;
             p.plate.angleBetaPartitionNumber = controls.angleBetaPartitionNumber;
             p.plate.contourFilletSlicesNumber = controls.contourFilletSlicesNumber;
             p.plate.point_D_FilletRadius = controls.point_D_FilletRadius;
+            p.plate.hole_G_Radius = controls.hole_G_Radius;
+            p.plate.hole_G_Center.x = controls.hole_G_CenterX;
+            p.plate.hole_G_Center.y = controls.hole_G_CenterY;
             p.plate.plateMesh.geometry.dispose();
+            p.plate.frontFaceMesh.geometry.dispose();
             p.plate.build();
         };
     };
@@ -73,6 +81,9 @@ function init() {
     gui.add(controls, 'angleBetaPartitionNumber', 1, 50).step(1).onChange(controls.asGeom);
     gui.add(controls, 'contourFilletSlicesNumber', 1, 50).step(1).onChange(controls.asGeom);
     gui.add(controls, 'point_D_FilletRadius', 1, 10).step(1).onChange(controls.asGeom);
+    gui.add(controls, 'hole_G_Radius', 1, 10).step(1).onChange(controls.asGeom);
+    gui.add(controls, 'hole_G_CenterX', 1, 20).step(1).onChange(controls.asGeom);
+    gui.add(controls, 'hole_G_CenterY', 1, 50).step(1).onChange(controls.asGeom);
     render();
     function render() {
     	// update the camera

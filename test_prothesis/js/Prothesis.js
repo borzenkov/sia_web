@@ -81,6 +81,8 @@ function PlateParameters() {
 	this.thickness = 10;
 	this.contourFilletSlicesNumber = 10;
 	this.angleBetaPartitionNumber = 10;
+	this.hole_G_Center = new THREE.Vector3( 5, 15, 0 );
+	this.hole_G_Radius = 2;
 }
 
 function Plate(parameters) {
@@ -122,14 +124,20 @@ function Plate(parameters) {
 	this.material = new THREE.MeshNormalMaterial();
 	this.material.side = THREE.DoubleSide;
 	this.plateMesh.material = this.material;
+	this.frontFaceMesh = new THREE.Mesh();
+	this.frontFaceMesh.material = this.material;
+	this.hole_G_Center = parameters.hole_G_Center;
+	this.hole_G_Radius = parameters.hole_G_Radius;
 	//Build plate
 	this.build();
 }
 
 Plate.prototype.build = function() {
 	this.contourFilletSliceRotationAngle = Math.PI / (2 * (this.contourFilletSlicesNumber + 1));
+	this.plateMesh.geometry = new THREE.Geometry();
 	this.buildScaledContour();
 	this.buildContourFillet();
+	this.buildFrontFace();
 };
 
 Plate.prototype.buildScaledContour = function() {
@@ -259,10 +267,9 @@ Plate.prototype.buildContourFillet = function() {
 	
 	this.contourFilletSlices[this.contourFilletSlicesNumber + 1] = this.lastContourFilletSlice;
 
-	var dotGeometry = new THREE.Geometry();
 	for(i = 0; i < this.contourFilletSlicesNumber + 2; i++) {
 		for(j = 0; j < this.contourFilletSlices[i].length; j++) {
-			dotGeometry.vertices.push(this.contourFilletSlices[i][j]);
+			this.plateMesh.geometry.vertices.push(this.contourFilletSlices[i][j]);
 		}
 	}
 	
@@ -271,11 +278,11 @@ Plate.prototype.buildContourFillet = function() {
 			var firstPointOfFirstTriangleIndex = i * this.contourFilletSlices[i].length + j;
 	    	var secondPointOfFirstTriangleIndex = i * this.contourFilletSlices[i].length + j + 1;
 	    	var thirdPointOfFirstTriangleIndex = (i + 1) * this.contourFilletSlices[i].length + j + 1;
-	    	dotGeometry.faces.push( new THREE.Face3( firstPointOfFirstTriangleIndex, secondPointOfFirstTriangleIndex, thirdPointOfFirstTriangleIndex ) );
+	    	this.plateMesh.geometry.faces.push( new THREE.Face3( firstPointOfFirstTriangleIndex, secondPointOfFirstTriangleIndex, thirdPointOfFirstTriangleIndex ) );
 	    	var firstPointOfSecondTriangleIndex = i * this.contourFilletSlices[i].length + j;
 	    	var secondPointOfSecondTriangleIndex = (i + 1) * this.contourFilletSlices[i].length + j + 1;
 	    	var thirdPointOfSecondTriangleIndex = (i + 1) * this.contourFilletSlices[i].length + j;
-	    	dotGeometry.faces.push( new THREE.Face3( firstPointOfSecondTriangleIndex, secondPointOfSecondTriangleIndex, thirdPointOfSecondTriangleIndex ) );
+	    	this.plateMesh.geometry.faces.push( new THREE.Face3( firstPointOfSecondTriangleIndex, secondPointOfSecondTriangleIndex, thirdPointOfSecondTriangleIndex ) );
 		}
 	}
 
@@ -283,16 +290,15 @@ Plate.prototype.buildContourFillet = function() {
 		var firstPointOfFirstTriangleIndex = i * this.contourFilletSlices[i].length;
 		var secondPointOfFirstTriangleIndex = (i + 1) * this.contourFilletSlices[i].length;
 		var thirdPointOfFirstTriangleIndex = i * this.contourFilletSlices[i].length + this.contourFilletSlices[i].length - 1;
-		dotGeometry.faces.push( new THREE.Face3( firstPointOfFirstTriangleIndex, secondPointOfFirstTriangleIndex, thirdPointOfFirstTriangleIndex ) );
+		this.plateMesh.geometry.faces.push( new THREE.Face3( firstPointOfFirstTriangleIndex, secondPointOfFirstTriangleIndex, thirdPointOfFirstTriangleIndex ) );
 
 		firstPointOfSecondTriangleIndex = (i + 1) * this.contourFilletSlices[i].length;
         secondPointOfSecondTriangleIndex = (i + 1) * this.contourFilletSlices[i].length + this.contourFilletSlices[i].length - 1;
         thirdPointOfSecondTriangleIndex = i * this.contourFilletSlices[i].length + this.contourFilletSlices[i].length - 1;
-        dotGeometry.faces.push( new THREE.Face3( firstPointOfSecondTriangleIndex, secondPointOfSecondTriangleIndex, thirdPointOfSecondTriangleIndex ) );
+        this.plateMesh.geometry.faces.push( new THREE.Face3( firstPointOfSecondTriangleIndex, secondPointOfSecondTriangleIndex, thirdPointOfSecondTriangleIndex ) );
 	}
 
-	dotGeometry.computeFaceNormals();
-	this.plateMesh.geometry = dotGeometry;
+	this.plateMesh.geometry.computeFaceNormals();
 };
 
 Plate.prototype.buildFirstContourFilletSlice = function() {
@@ -337,6 +343,21 @@ Plate.prototype.buildLastContourFilletSlice = function() {
 	var point_F_Fillet = calculateFillet(this.point_E, this.point_F, this.point_A, this.point_F_FilletRadius);
 	this.lastContourFilletSlice.push(point_F_Fillet[0]);
 	this.lastContourFilletSlice = this.lastContourFilletSlice.concat( getFilletPoints(point_F_Fillet, this.angleBetaPartitionNumber) );
+};
+
+Plate.prototype.buildFrontFace = function() {
+	var frontFaceShape = new THREE.Shape();
+	var i;
+	frontFaceShape.moveTo( this.point_A1.x, this.point_A1.y );
+	frontFaceShape.lineTo( this.point_B1.x, this.point_B1.y );
+	for(i = 2; i < this.firstContourFilletSlice.length; i++) {
+		frontFaceShape.lineTo( this.firstContourFilletSlice[i].x, this.firstContourFilletSlice[i].y );
+	}
+	var holeG = new THREE.Path();
+    holeG.absarc(this.hole_G_Center.x, this.hole_G_Center.y, this.hole_G_Radius, 0, Math.PI * 2, true);
+    frontFaceShape.holes.push(holeG);
+	var frontFaceGeometry = new THREE.ShapeGeometry( frontFaceShape );
+	this.frontFaceMesh.geometry = frontFaceGeometry;
 };
 
 function Prothesis(parameters) {
