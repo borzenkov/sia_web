@@ -78,7 +78,7 @@ function PlateParameters() {
 	this.point_E_FilletRadius = 5;
 	this.point_F_FilletRadius = 5;
 	this.contourFilletRadius = 0.5;
-	this.thickness = 10;
+	this.thickness = 5;
 	this.contourFilletSlicesNumber = 10;
 	this.angleBetaPartitionNumber = 10;
 	this.hole_G_Center = new THREE.Vector3( 5, 15, 0 );
@@ -124,10 +124,14 @@ function Plate(parameters) {
 	this.material = new THREE.MeshNormalMaterial();
 	this.material.side = THREE.DoubleSide;
 	this.plateMesh.material = this.material;
-	this.frontFaceMesh = new THREE.Mesh();
-	this.frontFaceMesh.material = this.material;
+	this.firstFaceMesh = new THREE.Mesh();
+	this.firstFaceMesh.material = this.material;
 	this.hole_G_Center = parameters.hole_G_Center;
 	this.hole_G_Radius = parameters.hole_G_Radius;
+	this.plateMirroredMesh = new THREE.Mesh();
+	this.plateMirroredMesh.material = this.material;
+	this.secondFaceMesh = new THREE.Mesh();
+	this.secondFaceMesh.material = this.material;
 	//Build plate
 	this.build();
 }
@@ -135,9 +139,13 @@ function Plate(parameters) {
 Plate.prototype.build = function() {
 	this.contourFilletSliceRotationAngle = Math.PI / (2 * (this.contourFilletSlicesNumber + 1));
 	this.plateMesh.geometry = new THREE.Geometry();
+	this.plateMirroredMesh.geometry = new THREE.Geometry();
 	this.buildScaledContour();
 	this.buildContourFillet();
-	this.buildFrontFace();
+	this.buildFirstFace();
+	this.buildSecondFace();
+	this.buildMirroredContourFillet();
+	this.buildLateralFace();
 };
 
 Plate.prototype.buildScaledContour = function() {
@@ -345,21 +353,64 @@ Plate.prototype.buildLastContourFilletSlice = function() {
 	this.lastContourFilletSlice = this.lastContourFilletSlice.concat( getFilletPoints(point_F_Fillet, this.angleBetaPartitionNumber) );
 };
 
-Plate.prototype.buildFrontFace = function() {
-	var frontFaceShape = new THREE.Shape();
+Plate.prototype.buildFirstFace = function() {
+	var firstFaceShape = new THREE.Shape();
 	var i;
-	frontFaceShape.moveTo( this.point_A1.x, this.point_A1.y );
-	frontFaceShape.lineTo( this.point_B1.x, this.point_B1.y );
+	firstFaceShape.moveTo( this.point_A1.x, this.point_A1.y );
+	firstFaceShape.lineTo( this.point_B1.x, this.point_B1.y );
 	for(i = 2; i < this.firstContourFilletSlice.length; i++) {
-		frontFaceShape.lineTo( this.firstContourFilletSlice[i].x, this.firstContourFilletSlice[i].y );
+		firstFaceShape.lineTo( this.firstContourFilletSlice[i].x, this.firstContourFilletSlice[i].y );
 	}
 	var holeG = new THREE.Path();
     holeG.absarc(this.hole_G_Center.x, this.hole_G_Center.y, this.hole_G_Radius, 0, Math.PI * 2, true);
-    frontFaceShape.holes.push(holeG);
-	var frontFaceGeometry = new THREE.ShapeGeometry( frontFaceShape );
-	this.frontFaceMesh.geometry = frontFaceGeometry;
+    firstFaceShape.holes.push(holeG);
+	var firstFaceGeometry = new THREE.ShapeGeometry( firstFaceShape );
+	for(i = 0; i < firstFaceGeometry.vertices.length; i++) {
+		firstFaceGeometry.vertices[i].setZ(this.thickness);
+	}
+	this.firstFaceMesh.geometry = firstFaceGeometry;
+};
+
+Plate.prototype.buildSecondFace = function() {
+	var secondFaceGeometry = new THREE.Geometry();
+	secondFaceGeometry.copy(this.firstFaceMesh.geometry);
+	for(i = 0; i < secondFaceGeometry.vertices.length; i++) {
+		secondFaceGeometry.vertices[i].setZ( 0 );
+	}
+
+	for ( var i = 0; i < secondFaceGeometry.faces.length; i ++ ) {
+    	var face = secondFaceGeometry.faces[ i ];
+    	var temp = face.a;
+    	face.a = face.c;
+    	face.c = temp;
+    }
+
+	secondFaceGeometry.computeFaceNormals();
+	secondFaceGeometry.computeVertexNormals();
+
+	this.secondFaceMesh.geometry = secondFaceGeometry;
+};
+
+Plate.prototype.buildMirroredContourFillet = function() {
+	this.plateMirroredMesh.geometry.copy(this.plateMesh.geometry);
+	var mirrorMatrix = new THREE.Matrix4();
+	mirrorMatrix.makeScale(1, 1, -1);
+
+	var translateMatrix = new THREE.Matrix4();
+	translateMatrix.makeTranslation(0, 0, -this.thickness);
+
+	var combinedMatrix = new THREE.Matrix4();
+	combinedMatrix.multiplyMatrices( mirrorMatrix, translateMatrix );
+	this.plateMirroredMesh.geometry.applyMatrix( combinedMatrix );
+};
+
+Plate.prototype.buildLateralFace = function () {
+	
 };
 
 function Prothesis(parameters) {
 	this.plate = new Plate(parameters);
 }
+
+exports.Prothesis = Prothesis;
+exports.PlateParameters = PlateParameters;
