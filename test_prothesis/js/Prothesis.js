@@ -122,7 +122,7 @@ function Plate(parameters) {
 	this.lastContourFilletSlice = new Array();
 	this.plateMesh = new THREE.Mesh();
 	this.material = new THREE.MeshNormalMaterial();
-	this.material.side = THREE.DoubleSide;
+	//this.material.side = THREE.DoubleSide;
 	this.plateMesh.material = this.material;
 	this.firstFaceMesh = new THREE.Mesh();
 	this.firstFaceMesh.material = this.material;
@@ -412,11 +412,18 @@ Plate.prototype.buildMirroredContourFillet = function() {
 	var combinedMatrix = new THREE.Matrix4();
 	combinedMatrix.multiplyMatrices( mirrorMatrix, translateMatrix );
 	this.plateMirroredMesh.geometry.applyMatrix( combinedMatrix );
+
+	for ( var i = 0; i < this.plateMirroredMesh.geometry.faces.length; i ++ ) {
+    	var face = this.plateMirroredMesh.geometry.faces[ i ];
+    	var temp = face.a;
+    	face.a = face.c;
+    	face.c = temp;
+    }
 };
 
 Plate.prototype.buildLateralFace = function () {
 	var pointsNumber = this.lastContourFilletSlice.length;
-	var startIndex = this.plateMesh.geometry.vertices.length - 1 - pointsNumber;
+	var startIndex = this.plateMesh.geometry.vertices.length - pointsNumber;
 	var i;
 	for(i = startIndex; i < startIndex + pointsNumber; i++) {
 		this.lateralFaceMesh.geometry.vertices.push( this.plateMesh.geometry.vertices[i] );
