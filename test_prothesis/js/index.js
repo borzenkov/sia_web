@@ -33,6 +33,7 @@ function init() {
     scene.add(p.plate.firstFaceMesh);
     scene.add(p.plate.secondFaceMesh);
     scene.add(p.plate.plateMirroredMesh);
+    scene.add(p.plate.lateralFaceMesh);
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0xFFFFFF, 1.0);
@@ -71,6 +72,7 @@ function init() {
             p.plate.plateMesh.geometry.dispose();
             p.plate.firstFaceMesh.geometry.dispose();
             p.plate.plateMirroredMesh.geometry.dispose();
+            p.plate.lateralFaceMesh.geometry.dispose();
             p.plate.build();
         };
     };

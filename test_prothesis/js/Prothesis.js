@@ -132,6 +132,8 @@ function Plate(parameters) {
 	this.plateMirroredMesh.material = this.material;
 	this.secondFaceMesh = new THREE.Mesh();
 	this.secondFaceMesh.material = this.material;
+	this.lateralFaceMesh = new THREE.Mesh();
+	this.lateralFaceMesh.material = this.material;
 	//Build plate
 	this.build();
 }
@@ -140,6 +142,7 @@ Plate.prototype.build = function() {
 	this.contourFilletSliceRotationAngle = Math.PI / (2 * (this.contourFilletSlicesNumber + 1));
 	this.plateMesh.geometry = new THREE.Geometry();
 	this.plateMirroredMesh.geometry = new THREE.Geometry();
+	this.lateralFaceMesh.geometry = new THREE.Geometry();
 	this.buildScaledContour();
 	this.buildContourFillet();
 	this.buildFirstFace();
@@ -300,9 +303,9 @@ Plate.prototype.buildContourFillet = function() {
 		var thirdPointOfFirstTriangleIndex = i * this.contourFilletSlices[i].length + this.contourFilletSlices[i].length - 1;
 		this.plateMesh.geometry.faces.push( new THREE.Face3( firstPointOfFirstTriangleIndex, secondPointOfFirstTriangleIndex, thirdPointOfFirstTriangleIndex ) );
 
-		firstPointOfSecondTriangleIndex = (i + 1) * this.contourFilletSlices[i].length;
-        secondPointOfSecondTriangleIndex = (i + 1) * this.contourFilletSlices[i].length + this.contourFilletSlices[i].length - 1;
-        thirdPointOfSecondTriangleIndex = i * this.contourFilletSlices[i].length + this.contourFilletSlices[i].length - 1;
+		var firstPointOfSecondTriangleIndex = (i + 1) * this.contourFilletSlices[i].length;
+        var secondPointOfSecondTriangleIndex = (i + 1) * this.contourFilletSlices[i].length + this.contourFilletSlices[i].length - 1;
+        var thirdPointOfSecondTriangleIndex = i * this.contourFilletSlices[i].length + this.contourFilletSlices[i].length - 1;
         this.plateMesh.geometry.faces.push( new THREE.Face3( firstPointOfSecondTriangleIndex, secondPointOfSecondTriangleIndex, thirdPointOfSecondTriangleIndex ) );
 	}
 
@@ -388,6 +391,13 @@ Plate.prototype.buildSecondFace = function() {
 	secondFaceGeometry.computeFaceNormals();
 	secondFaceGeometry.computeVertexNormals();
 
+	//var faceVertexUvs = secondFaceGeometry.faceVertexUvs[ 0 ];
+	//for ( var i = 0; i < faceVertexUvs.length; i++ ) {
+   	//	var temp = faceVertexUvs[ i ][ 0 ];
+    //	faceVertexUvs[ i ][ 0 ] = faceVertexUvs[ i ][ 2 ];
+    //	faceVertexUvs[ i ][ 2 ] = temp;
+    //}
+
 	this.secondFaceMesh.geometry = secondFaceGeometry;
 };
 
@@ -405,7 +415,37 @@ Plate.prototype.buildMirroredContourFillet = function() {
 };
 
 Plate.prototype.buildLateralFace = function () {
-	
+	var pointsNumber = this.lastContourFilletSlice.length;
+	var startIndex = this.plateMesh.geometry.vertices.length - 1 - pointsNumber;
+	var i;
+	for(i = startIndex; i < startIndex + pointsNumber; i++) {
+		this.lateralFaceMesh.geometry.vertices.push( this.plateMesh.geometry.vertices[i] );
+	}
+	for(i = startIndex; i < startIndex + pointsNumber; i++) {
+		this.lateralFaceMesh.geometry.vertices.push( this.plateMirroredMesh.geometry.vertices[i] );
+	}
+	//console.log(this.lateralFaceMesh.geometry.vertices);
+	for(i = 0; i < pointsNumber - 1; i++) {
+		var firstPointOfFirstTriangleIndex = i;
+		var secondPointOfFirstTriangleIndex = i + 1;
+		var thirdPointOfFirstTriangleIndex = pointsNumber + i + 1;
+		this.lateralFaceMesh.geometry.faces.push( new THREE.Face3( firstPointOfFirstTriangleIndex, secondPointOfFirstTriangleIndex, thirdPointOfFirstTriangleIndex ) );
+		var firstPointOfSecondTriangleIndex = i;
+		var secondPointOfSecondTriangleIndex = pointsNumber + i + 1;
+		var thirdPointOfSecondTriangleIndex = pointsNumber + i;
+		this.lateralFaceMesh.geometry.faces.push( new THREE.Face3( firstPointOfSecondTriangleIndex, secondPointOfSecondTriangleIndex, thirdPointOfSecondTriangleIndex ) );
+	}
+
+	var firstPointOfFirstTriangleIndex = pointsNumber - 1;
+	var secondPointOfFirstTriangleIndex = 0;
+	var thirdPointOfFirstTriangleIndex = pointsNumber;
+	var firstPointOfSecondTriangleIndex = pointsNumber - 1;
+	var secondPointOfSecondTriangleIndex = pointsNumber;
+	var thirdPointOfSecondTriangleIndex = pointsNumber + pointsNumber - 1;
+	this.lateralFaceMesh.geometry.faces.push( new THREE.Face3( firstPointOfFirstTriangleIndex, secondPointOfFirstTriangleIndex, thirdPointOfFirstTriangleIndex ) );
+	this.lateralFaceMesh.geometry.faces.push( new THREE.Face3( firstPointOfSecondTriangleIndex, secondPointOfSecondTriangleIndex, thirdPointOfSecondTriangleIndex ) );
+
+	this.lateralFaceMesh.geometry.computeFaceNormals();
 };
 
 function Prothesis(parameters) {
