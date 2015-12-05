@@ -1,0 +1,34 @@
+body
+{
+	/* set margin to 0 and overflow to hidden, to go fullscreen */
+	margin: 0;
+	overflow: hidden;
+}
+
+#HeadMenu
+{
+	position: absolute;
+}
+
+#ShowHeadParametersButton
+{
+	display: block;
+}
+
+#HeadParametersWindow
+{
+	display: none;
+}
+
+#headCanvas
+{
+	background-color: white;
+	border: thin solid black;
+	display: block;
+}
+
+#message
+{
+	position: absolute;
+	font-weight: bold;
+}
